@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>UI Prompt Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;600;800&family=Space+Grotesk:wght@400;600;700&family=Sora:wght@400;600;800&family=Playfair+Display:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--b:#eeeef1;--s:#fff;--t:#16161a;--m:#7b7b86;--ln:#e3e3e8;color-scheme:light;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--b:#0b0b0e;--s:#17171c;--t:#f1f1f4;--m:#8e8e99;--ln:#26262d;color-scheme:dark}}
+:root[data-theme="dark"]{--b:#0b0b0e;--s:#17171c;--t:#f1f1f4;--m:#8e8e99;--ln:#26262d;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--b);color:var(--t);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--b);z-index:20}
+.wrap{max-width:1000px;margin:0 auto;padding:0 14px 40px}
+.stage{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;padding:10px 0;background:var(--b)}
+.panel h1{font-size:20px;margin:6px 2px 4px}.panel>p{color:var(--m);font-size:13.5px;margin:0 2px 14px;line-height:1.5}
+.g{background:var(--s);border:1px solid var(--ln);border-radius:20px;padding:16px;margin-bottom:12px}
+.g h3{font-size:14px;margin-bottom:12px}.g h3 small{color:var(--m);font-weight:400;margin-left:6px}
+.lab{font-size:12.5px;color:var(--m);margin:12px 0 6px}
+.pre{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.pre button,.seg button{flex:none;border:1px solid var(--ln);background:none;color:var(--t);font:inherit;font-size:13px;padding:8px 13px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:7px}
+.pre i{width:16px;height:16px;border-radius:50%;display:block}
+.seg{display:flex;gap:7px;flex-wrap:wrap}
+.seg button[aria-pressed="true"]{background:var(--t);color:var(--b);border-color:var(--t)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cp{display:flex;align-items:center;gap:10px;border:1px solid var(--ln);border-radius:14px;padding:8px;font-size:12.5px;cursor:pointer}
+.cp input{width:38px;height:38px;border:0;padding:0;background:none;border-radius:10px;cursor:pointer;flex:none}
+.cp span{display:block;line-height:1.3}.cp code{color:var(--m);font-size:11.5px}
+.note{font-size:12.5px;color:var(--m);margin-top:10px}
+select,.in{width:100%;font:inherit;font-size:14px;padding:11px 12px;border-radius:12px;border:1px solid var(--ln);background:var(--b);color:var(--t)}
+input[type=range]{width:100%;accent-color:var(--t)}
+.rg{display:flex;justify-content:space-between;font-size:12.5px;color:var(--m)}
+#gen{width:100%;border:0;border-radius:18px;padding:17px;font:800 16px Inter,sans-serif;color:#fff;cursor:pointer;background:linear-gradient(145deg,var(--u1,#d6143c),var(--u2,#7a0a24));box-shadow:0 10px 24px color-mix(in srgb,var(--u1,#d6143c) 40%,transparent)}
+#gen:active{transform:scale(.98)}
+#out{display:none;margin-top:14px}
+#txt{width:100%;min-height:340px;resize:vertical;font:12.5px/1.55 ui-monospace,Menlo,Consolas,monospace;padding:12px;border-radius:12px;border:1px solid var(--ln);background:var(--b);color:var(--t)}
+#copy{margin-top:10px;width:100%;padding:13px;border-radius:14px;border:1px solid var(--t);background:var(--t);color:var(--b);font:600 14px Inter,sans-serif;cursor:pointer}
+:focus-visible{outline:2px solid var(--t);outline-offset:2px}
+@media(min-width:860px){.wrap{display:grid;grid-template-columns:360px 1fr;gap:24px;align-items:start;padding-top:16px}.stage{top:16px;padding:0}.pv{min-height:520px!important;padding:22px!important;gap:16px!important}.p-hero{height:150px!important}.orb{width:96px!important;height:96px!important}}
+
+/* ---------- live preview ---------- */
+.pv{--line:color-mix(in srgb,var(--ink) 10%,transparent);--mut:color-mix(in srgb,var(--ink) 55%,var(--bg));
+  --shd:0 1px 2px rgba(0,0,0,calc(.08*var(--sh))),0 10px 26px rgba(0,0,0,calc(.16*var(--sh)));
+  background:var(--bg);color:var(--ink);font-family:var(--ff),system-ui,sans-serif;border-radius:28px;padding:14px;min-height:292px;
+  display:flex;flex-direction:column;justify-content:space-between;gap:8px;position:relative;overflow:hidden;border:1px solid var(--line)}
+.sf{background:var(--surface);border:1px solid var(--line);box-shadow:var(--shd)}
+.pv[data-style=glass]{background:radial-gradient(circle at 15% 15%,color-mix(in srgb,var(--a1) 45%,transparent),transparent 45%),radial-gradient(circle at 90% 75%,color-mix(in srgb,var(--a2) 45%,transparent),transparent 50%),var(--bg)}
+.pv[data-style=glass] .sf{background:color-mix(in srgb,var(--surface) 55%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-color:color-mix(in srgb,#fff 35%,transparent)}
+.pv[data-style=flat] .sf{box-shadow:none}
+.pv[data-style=brutal] .sf{border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
+.p-top{display:flex;justify-content:space-between;align-items:center}
+.p-brand{font-weight:800;letter-spacing:.16em;font-size:17px}
+.p-round{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--ink);cursor:pointer}
+.p-round svg,.p-send svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.p-hero{height:66px;display:grid;place-items:center;position:relative}
+.halo{position:absolute;width:240px;height:70px;background:radial-gradient(closest-side,color-mix(in srgb,var(--a1) 30%,transparent),transparent)}
+.orb{width:54px;height:54px;border-radius:50%;position:relative;background:radial-gradient(circle at 35% 28%,color-mix(in srgb,var(--a1) 70%,#fff),var(--a1) 45%,var(--a2));box-shadow:0 0 0 5px var(--surface),0 0 0 6px var(--line),0 10px 30px color-mix(in srgb,var(--a1) 50%,transparent)}
+.pv[data-hero=blob] .orb{border-radius:42% 58% 60% 40%/50% 40% 60% 50%}
+.pv[data-hero=none] .p-hero{display:none}
+.p-in{display:flex;align-items:center;justify-content:space-between;padding:5px 5px 5px 14px;border-radius:var(--rb);font-size:12.5px;color:var(--mut)}
+.pbtn{width:34px;height:34px;border:0;display:grid;place-items:center;color:var(--on);border-radius:var(--rb);cursor:pointer}
+.p-send{width:auto;padding:0 16px;font:700 12px var(--ff),sans-serif}
+.pv[data-btn=gradient] .pbtn{background:linear-gradient(145deg,var(--a1),var(--a2));box-shadow:0 6px 14px color-mix(in srgb,var(--a1) 40%,transparent)}
+.pv[data-btn=solid] .pbtn{background:var(--a1)}
+.pv[data-btn=outline] .pbtn{background:transparent;color:var(--a1);border:1.5px solid var(--a1)}
+.pv[data-style=brutal] .pbtn{border:2px solid var(--ink)}
+.p-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pcard{border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:13px;font-weight:700;min-height:54px;justify-content:center}
+.pcard small{font-weight:400;color:var(--mut);font-size:11px}
+.pcard.t{flex-direction:row;align-items:center;justify-content:space-between}
+.ptog{width:40px;height:24px;border-radius:999px;border:0;background:var(--line);position:relative;cursor:pointer;flex:none;transition:background .2s}
+.ptog::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.3);transition:transform calc(.25s*var(--spd)) ease}
+.ptog.on{background:linear-gradient(145deg,var(--a1),var(--a2))}.ptog.on::after{transform:translateX(16px)}
+.p-nav{display:flex;padding:5px;border-radius:calc(var(--r) + 4px)}
+.p-nav button{flex:1;border:0;background:none;color:var(--mut);font:600 11.5px var(--ff),sans-serif;padding:9px 0;border-radius:max(8px,calc(var(--r) - 4px));cursor:pointer}
+.p-nav button.on{background:color-mix(in srgb,var(--a1) 14%,transparent);color:var(--a1)}
+.pv[data-nav=bar] .p-nav{margin:0 -14px -14px;border-radius:0;border-width:1px 0 0;box-shadow:none;padding:5px 14px}
+.tap{transition:transform .15s}
+.an-press .tap:active{transform:scale(.93)}
+.an-breathe .orb,.an-breathe .halo{animation:br calc(4s*var(--spd)) ease-in-out infinite}
+.an-pulse .orb::after{content:"";position:absolute;inset:-6px;border-radius:inherit;border:2px solid var(--a1);animation:pg calc(1.6s*var(--spd)) ease-out infinite}
+.an-float .pcard{animation:fl calc(3s*var(--spd)) ease-in-out infinite alternate}.an-float .pcard.t{animation-delay:-1.5s}
+.an-shimmer .pbtn{position:relative;overflow:hidden}
+.an-shimmer .pbtn::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.6) 50%,transparent 70%);transform:translateX(-130%);animation:sh calc(2.2s*var(--spd)) infinite}
+.an-spring .ptog::after{transition-timing-function:cubic-bezier(.3,1.7,.5,1)}
+@keyframes br{50%{transform:scale(1.1)}}@keyframes pg{to{transform:scale(1.45);opacity:0}}
+@keyframes fl{to{transform:translateY(-5px)}}@keyframes sh{to{transform:translateX(130%)}}
+@media (prefers-reduced-motion:reduce){.pv *{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stage">
+    <div class="pv" id="pv">
+      <div class="p-top"><b class="p-brand">Aa Sample</b><button class="p-round sf tap" aria-label="Sample icon button"><svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg></button></div>
+      <div class="p-hero"><i class="halo"></i><i class="orb"></i></div>
+      <div class="p-in sf"><span>Input field</span><button class="pbtn p-send tap">Primary</button></div>
+      <div class="p-row"><div class="pcard sf tap"><span>Card title</span><small>Sample text</small></div><div class="pcard t sf"><span>Toggle</span><button class="ptog on" aria-label="Sample toggle"></button></div></div>
+      <div class="p-nav sf"><button class="on tap">Tab one</button><button class="tap">Tab two</button><button class="tap">Tab three</button></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h1>UI Prompt Studio</h1>
+    <p>Describe your app, pick the style, then press Generate. The box above is only a style sample, not your app.</p>
+
+    <div class="g"><h3>Your app<small>fill this first</small></h3>
+      <p class="lab" style="margin-top:0">App name</p><input class="in" id="name" placeholder="Enter your app name">
+      <p class="lab">What should the app do?</p><textarea class="in" id="desc" rows="5" style="resize:vertical" placeholder="Describe the main idea and features. Example: the user uploads an image and the app describes every detail in it."></textarea>
+      <p class="lab">Layout type</p><div class="seg" data-k="platform"></div></div>
+
+    <div class="g"><h3>Presets</h3><div class="pre" id="pre"></div></div>
+
+    <div class="g"><h3>Colors<small>tap a swatch to pick</small></h3>
+      <div class="cols" id="cols"></div>
+      <p class="note" id="ctr"></p></div>
+
+    <div class="g"><h3>Style</h3>
+      <div class="seg" data-k="style"></div>
+      <p class="lab">Primary button</p><div class="seg" data-k="btn"></div>
+      <p class="lab">Button and input shape</p><div class="seg" data-k="shape"></div>
+      <p class="lab rg"><span>Card corner radius</span><span id="vr"></span></p><input type="range" id="radius" min="0" max="32">
+      <p class="lab rg"><span>Shadow depth</span><span id="vd"></span></p><input type="range" id="depth" min="0" max="100"></div>
+
+    <div class="g"><h3>Typography</h3>
+      <select id="font" aria-label="Font"><option>Plus Jakarta Sans</option><option>Inter</option><option>Space Grotesk</option><option>Sora</option><option>Playfair Display</option></select></div>
+
+    <div class="g"><h3>Hero and navigation</h3>
+      <div class="seg" data-k="hero"></div>
+      <p class="lab">Navigation</p><div class="seg" data-k="nav"></div></div>
+
+    <div class="g"><h3>Animation<small>multi-select</small></h3>
+      <div class="seg" id="anim"></div>
+      <p class="lab rg"><span>Speed</span><span id="vs"></span></p><input type="range" id="speed" min="50" max="200"></div>
+
+
+    <button id="gen">Generate UI/UX prompt</button>
+    <div class="g" id="out"><h3>Your prompt<small>paste into any AI</small></h3><textarea id="txt" readonly></textarea><button id="copy">Copy prompt</button></div>
+  </div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const pv=$('#pv');
+const S={bg:'#f6f6f7',surface:'#ffffff',ink:'#16161a',a1:'#d6143c',a2:'#7a0a24',style:'soft',btn:'gradient',shape:'pill',hero:'none',nav:'float',platform:'mobile app',font:'Plus Jakarta Sans',radius:22,depth:60,speed:100,anim:['press','breathe']};
+const PRE=[['Crimson','#f6f6f7','#ffffff','#16161a','#d6143c','#7a0a24'],['Midnight violet','#0f0d1a','#1a1730','#f1efff','#8b5cf6','#4c1d95'],['Forest mint','#f2f7f4','#ffffff','#10231a','#10b981','#065f46'],['Ocean blue','#f3f7fc','#ffffff','#0f1b2d','#2563eb','#1e3a8a'],['Amber night','#121110','#1d1b19','#f6f1ea','#f59e0b','#b45309'],['Mono ink','#f4f4f4','#ffffff','#111111','#111111','#555555']];
+const OPT={style:[['soft','Soft UI'],['glass','Glass'],['flat','Flat'],['brutal','Neo-brutal']],btn:[['gradient','Gradient'],['solid','Solid'],['outline','Outline']],shape:[['pill','Pill'],['round','Rounded'],['square','Square']],hero:[['orb','Glow orb'],['blob','Blob'],['none','None']],nav:[['float','Floating pill'],['bar','Full-width bar']],platform:[['mobile app','Mobile app'],['web dashboard','Web dashboard'],['landing page','Landing page']]};
+const ANIM=[['press','Press feedback'],['breathe','Breathing glow'],['pulse','Pulse ring'],['float','Floating cards'],['shimmer','Button shimmer'],['spring','Spring toggle']];
+const COLS=[['bg','Background'],['surface','Cards and surfaces'],['ink','Text'],['a1','Accent'],['a2','Accent dark (gradient end)']];
+const RB={pill:'999px',round:'14px',square:'4px'};
+
+const lum=h=>{const c=[1,3,5].map(i=>parseInt(h.substr(i,2),16)/255).map(v=>v<=.03928?v/12.92:((v+.055)/1.055)**2.4);return .2126*c[0]+.7152*c[1]+.0722*c[2]};
+const cr=(a,b)=>{const x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
+
+function apply(){
+  const st=pv.style;
+  st.setProperty('--bg',S.bg);st.setProperty('--surface',S.surface);st.setProperty('--ink',S.ink);
+  st.setProperty('--a1',S.a1);st.setProperty('--a2',S.a2);
+  st.setProperty('--on',cr(S.a1,'#ffffff')>=cr(S.a1,'#000000')?'#ffffff':'#111111');
+  st.setProperty('--r',S.radius+'px');st.setProperty('--rb',RB[S.shape]);
+  st.setProperty('--sh',S.depth/100);st.setProperty('--spd',100/S.speed);
+  st.setProperty('--ff',"'"+S.font+"'");
+  document.documentElement.style.setProperty('--u1',S.a1);document.documentElement.style.setProperty('--u2',S.a2);
+  pv.dataset.style=S.style;pv.dataset.btn=S.btn;pv.dataset.hero=S.hero;pv.dataset.nav=S.nav;
+  pv.className='pv '+S.anim.map(a=>'an-'+a).join(' ');
+  $('#vr').textContent=S.radius+'px';$('#vd').textContent=S.depth+'%';$('#vs').textContent=(S.speed/100).toFixed(1)+'x';
+  COLS.forEach(([k])=>{const e=$('[data-c="'+k+'"]');e.value=S[k];e.parentNode.querySelector('code').textContent=S[k].toUpperCase()});
+  const r=cr(S.ink,S.bg);
+  $('#ctr').textContent='Text on background: '+r.toFixed(1)+':1, '+(r>=7?'excellent contrast':r>=4.5?'passes accessibility (AA)':'too low, text will be hard to read');
+  $$('.seg[data-k]').forEach(g=>[...g.children].forEach(b=>b.setAttribute('aria-pressed',S[g.dataset.k]===b.dataset.v)));
+  [...$('#anim').children].forEach(b=>b.setAttribute('aria-pressed',S.anim.includes(b.dataset.v)));
+}
+
+/* build controls */
+PRE.forEach(p=>{const b=document.createElement('button');b.innerHTML='<i style="background:linear-gradient(135deg,'+p[4]+','+p[5]+')"></i>'+p[0];b.onclick=()=>{[S.bg,S.surface,S.ink,S.a1,S.a2]=p.slice(1);apply()};$('#pre').appendChild(b)});
+COLS.forEach(([k,l])=>{const d=document.createElement('label');d.className='cp';d.innerHTML='<input type="color" data-c="'+k+'" aria-label="'+l+'"><span>'+l+'<br><code></code></span>';d.querySelector('input').oninput=e=>{S[k]=e.target.value;apply()};$('#cols').appendChild(d)});
+$$('.seg[data-k]').forEach(g=>OPT[g.dataset.k].forEach(([v,l])=>{const b=document.createElement('button');b.textContent=l;b.dataset.v=v;b.onclick=()=>{S[g.dataset.k]=v;apply()};g.appendChild(b)}));
+ANIM.forEach(([v,l])=>{const b=document.createElement('button');b.textContent=l;b.dataset.v=v;b.onclick=()=>{S.anim=S.anim.includes(v)?S.anim.filter(x=>x!==v):[...S.anim,v];apply()};$('#anim').appendChild(b)});
+[['radius','radius'],['depth','depth'],['speed','speed']].forEach(([id,k])=>{const e=$('#'+id);e.value=S[k];e.oninput=()=>{S[k]=+e.value;apply()}});
+$('#font').onchange=e=>{S.font=e.target.value;apply()};
+$('.ptog').onclick=e=>e.currentTarget.classList.toggle('on');
+$$('.p-nav button').forEach(b=>b.onclick=()=>{$$('.p-nav button').forEach(x=>x.classList.remove('on'));b.classList.add('on')});
+apply();
+
+/* prompt */
+function build(){
+  const s=S,ms=Math.round(200/(s.speed/100)),name=$('#name').value.trim(),desc=$('#desc').value.trim();
+  const sty={soft:'Soft UI. Depth comes from layered, low-opacity, large-blur shadows plus a 1px hairline border. No harsh outlines.',glass:'Glassmorphism. Translucent frosted surfaces (backdrop-blur about 14px), thin light borders, and soft blurred accent-colored shapes behind them.',flat:'Flat minimal. No shadows. Structure comes from 1px borders, whitespace and color contrast.',brutal:'Neo-brutalism. 2px solid text-colored borders, hard offset shadows (3px 3px 0, no blur), high contrast, bold type.'}[s.style];
+  const btn={gradient:'Primary button: diagonal gradient from the accent to the dark accent, readable text, soft accent-colored glow.',solid:'Primary button: solid accent fill, readable text, no gradient.',outline:'Primary button: transparent with a 1.5px accent border and accent text; fills with a light accent tint on press.'}[s.btn];
+  const shape={pill:'fully pill-shaped (radius 999px)',round:'rounded (radius 14px)',square:'nearly square (radius 4px)'}[s.shape];
+  const dep=s.depth<15?'almost none':s.depth<45?'subtle':s.depth<75?'medium':'pronounced';
+  const hero={orb:'One glowing circular orb in the accent gradient with a soft blurred halo behind it. This is the only highly expressive element; keep everything else calm.',blob:'One organic blob shape filled with the accent gradient and a soft halo. This is the only highly expressive element; keep everything else calm.',none:'No hero graphic. Let typography and spacing carry the page. Do not add orbs, glowing circles or decorative blobs anywhere.'}[s.hero];
+  const nav={float:'Floating navigation bar inset from the screen edges with large rounded corners; the active tab gets a light accent-tinted pill.',bar:'Full-width navigation bar fixed to the bottom with a 1px top border; the active tab gets a light accent tint and accent-colored label.'}[s.nav];
+  const am={press:'Press feedback: scale to 0.94 on press with a quick ease ('+Math.round(ms*.75)+'ms).',breathe:'Breathing glow: the hero and its halo scale gently to 1.1 and back in a '+(4/(s.speed/100)).toFixed(1)+'s loop.',pulse:'Pulse ring: a thin accent ring expands and fades from the hero every '+(1.6/(s.speed/100)).toFixed(1)+'s.',float:'Floating cards: cards drift up and down by 5px, out of phase with each other.',shimmer:'Button shimmer: a soft diagonal highlight sweeps across the primary button every '+(2.2/(s.speed/100)).toFixed(1)+'s.',spring:'Spring toggles: the switch knob overshoots slightly with cubic-bezier(.3, 1.7, .5, 1).'};
+  const motion=s.anim.length?s.anim.map(a=>'- '+am[a]).join('\n'):'- No decorative animation. Only instant state changes.';
+  const dark=lum(s.bg)<.25;
+  return `Today we will build a web app (layout type: ${s.platform}) using JavaScript and CSS in a single index.html file.
+
+# APP NAME: "${name||'[your app name]'}"
+
+# WHAT THE APP DOES (main purpose and features):
+${desc||'[describe the main idea of your app here]'}
+
+#------------Design style---------#
+Apply this design system to the app above. The features come only from the description; this section controls how the app looks, feels and moves. Put every design decision in CSS custom properties so the theme can be changed in one place.
+
+1. COLOR SYSTEM (${dark?'dark':'light'} theme)
+- Background: ${s.bg}
+- Surface (cards, inputs, nav): ${s.surface}
+- Text: ${s.ink}; secondary text is a 55% blend of text and background
+- Accent: ${s.a1}; dark accent for gradients and pressed states: ${s.a2}
+- Use the accent only for primary actions, active states and toggles. Never add other hues.
+- Body text must keep at least 4.5:1 contrast. Provide a matching ${dark?'light':'dark'} theme through CSS variables.
+
+2. VISUAL STYLE
+${sty}
+
+3. SHAPE AND DEPTH
+- Cards: ${s.radius}px corner radius. Buttons and inputs: ${shape}. Icon buttons: circular.
+- Shadow depth: ${dep}.
+- Spacing on a 0.5rem grid, 1.25rem page padding, generous whitespace, clear hierarchy, at most 2 columns. Use rem units for all sizes.
+
+4. TYPOGRAPHY
+- Use ${s.font} (with a system sans-serif fallback). Bold headings, regular body, small muted captions, sentence case. One family only.
+
+5. COMPONENTS
+- ${btn}
+- Secondary actions and cards: surface color, same radius, accent-colored icon.
+- Inputs: ${shape}, placeholder in secondary text, visible focus ring in the accent.
+- Toggle switches: accent gradient when on, white knob.
+- ${nav}
+
+6. HERO ELEMENT
+${hero}
+
+7. MOTION (base duration ${ms}ms)
+${motion}
+- Animate only on user action or on the single hero element. Respect prefers-reduced-motion.
+
+8. QUALITY BAR
+Fully fluid and responsive from small phones to wide desktops, keyboard focus states, ARIA roles on switches and tabs, safe-area insets on phones. Avoid generic template looks: no default Bootstrap cards, no rainbow gradients, no emoji icons.
+
+# ----------------------------------#
+
+# Critical: follow these CSS rules (dynamic dimensions and fluid sizing)
+1. FLUID SIZING: No fixed px widths or heights. Use %, rem, max-width and clamp().
+2. MODERN LAYOUT: No floats or absolute positioning for structure. Use CSS Grid (2D) and Flexbox (1D).
+3. MEDIA AND OVERFLOW: img, video { max-width: 100%; height: auto; } and html, body { max-width: 100vw; overflow-x: hidden; }
+4. FLUID TYPOGRAPHY: Spacing in rem. Always combine rem + vw inside clamp() for font-size, for example clamp(1rem, calc(1rem + 2vw), 2.5rem).
+
+# ----------------------------------#
+
+So give me one complete, self-contained index.html file (HTML + CSS + vanilla JS). Return only the code.`;
+}
+$('#gen').onclick=()=>{$('#txt').value=build();$('#out').style.display='block';$('#out').scrollIntoView({behavior:'smooth',block:'start'})};
+$('#copy').onclick=async()=>{const t=$('#txt');t.select();try{await navigator.clipboard.writeText(t.value)}catch(e){try{document.execCommand('copy')}catch(_){}}const c=$('#copy');c.textContent='Copied';setTimeout(()=>c.textContent='Copy prompt',1500)};
+</script>
+</body>
+</html>
